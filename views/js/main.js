@@ -448,33 +448,12 @@ var resizePizzas = function(size) {
   }
 
   // Iterates through pizza elements on the page and changes their widths
-   function changePizzaSizes(size) {
-    // Changed querySelectorAll to getElementsByClassName
-    var randomPizzas = document.getElementsByClassName("randomPizzaContainer");
-
-
-    // Slider will change the pizza view size.
-      switch(size) {
-         case "1":
-           newWidth = 25;
-           break;
-         case "2":
-           newWidth = 33.3;
-           break;
-         case "3":
-           newWidth = 50;
-           break;
-         default:
-           console.log("bug in sizeSwitcher");
-       }
-
-
-       // Saved the array length, which is part of the condition statement, in a local variable, so the array's length property is not accessed to check its value at each iteration. (i.e. more efficiency)
-       var len = randomPizzas.length;
-       for (var i = 0; i < len; i++) {
-         randomPizzas[i].style.width = newWidth + '%';
-       }
-
+  function changePizzaSizes(size) {
+    for (var i = 0; i < document.querySelectorAll(".randomPizzaContainer").length; i++) {
+      var dx = determineDx(document.querySelectorAll(".randomPizzaContainer")[i], size);
+      var newwidth = (document.querySelectorAll(".randomPizzaContainer")[i].offsetWidth + dx) + 'px';
+      document.querySelectorAll(".randomPizzaContainer")[i].style.width = newwidth;
+    }
   }
 
   changePizzaSizes(size);
@@ -489,8 +468,8 @@ var resizePizzas = function(size) {
 window.performance.mark("mark_start_generating"); // collect timing data
 
 // This for-loop actually creates and appends all of the pizzas when the page loads
-var pizzasDiv = document.getElementById("randomPizzas");
 for (var i = 2; i < 100; i++) {
+  var pizzasDiv = document.getElementById("randomPizzas");
   pizzasDiv.appendChild(pizzaElementGenerator(i));
 }
 
@@ -499,6 +478,7 @@ window.performance.mark("mark_end_generating");
 window.performance.measure("measure_pizza_generation", "mark_start_generating", "mark_end_generating");
 var timeToGenerate = window.performance.getEntriesByName("measure_pizza_generation");
 console.log("Time to generate pizzas on load: " + timeToGenerate[0].duration + "ms");
+
 // Iterator for number of times the pizzas in the background have scrolled.
 // Used by updatePositions() to decide when to log the average time per frame
 var frame = 0;
@@ -521,27 +501,11 @@ function updatePositions() {
   frame++;
   window.performance.mark("mark_start_frame");
 
-
-  // items = document.getElementsByClassName('mover');
-  var top = (document.body.scrollTop / 1250); // If this is made global, moving pizza breaks
-  var cachedLength = items.length;
-  var phase;
-
-   // Instead of having the for-loop doing constant recalculations for 5 values
-   // the for-loop can access it from the constArray.
-   // Source: https://discussions.udacity.com/t/project-4-how-do-i-optimize-the-background-pizzas-for-loop/36302/8
-   var constArray = [];
-
-   for (var i = 0; i < 5; i ++){
-     constArray.push(Math.sin(top + i));
-   }
-
-
-   // Repositioned pizzas
-   for (var r = 0; r < cachedLength; r++){
-     phase = constArray[r % 5];
-     items[r].style.transform = 'translateX(' + (100 * phase) + 'px)';
-   }
+  var items = document.querySelectorAll('.mover');
+  for (var i = 0; i < items.length; i++) {
+    var phase = Math.sin((document.body.scrollTop / 1250) + (i % 5));
+    items[i].style.left = items[i].basicLeft + 100 * phase + 'px';
+  }
 
   // User Timing API to the rescue again. Seriously, it's worth learning.
   // Super easy to create custom metrics.
@@ -560,19 +524,7 @@ window.addEventListener('scroll', updatePositions);
 document.addEventListener('DOMContentLoaded', function() {
   var cols = 8;
   var s = 256;
-  var rows = 6 // Added Rows
-  var totalPizzas = 36;
-  var elem;   // Declaring elem outside for loop
-
-  //Declare var movingPizzas outside the for loop to avoid the DOM from being called on each iteration
-  var movingPizzas = document.getElementById('movingPizzas1');
-
-  // Calculate cols and rows based on the browser window
-  // Source: https://github.com/uncleoptimus/udacityP4/blob/gh-pages/views/js/main.js
-  cols = Math.ceil(window.innerWidth / (s - 73.33));
-  rows = Math.ceil(window.innerHeight / s);
-  totalPizzas = cols * rows;
-  for (var i = 0; i < totalPizzas; i++) {
+  for (var i = 0; i < 200; i++) {
     var elem = document.createElement('img');
     elem.className = 'mover';
     elem.src = "images/pizza.png";
@@ -580,13 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
     elem.style.width = "73.333px";
     elem.basicLeft = (i % cols) * s;
     elem.style.top = (Math.floor(i / cols) * s) + 'px';
-    movingPizzas1.appendChild(elem);
-  // Changed document.querySelector to document.getElementById
-    document.getElementById("movingPizzas1").appendChild(elem);
+    document.querySelector("#movingPizzas1").appendChild(elem);
   }
-
-  // Move items here to stop updatePositions from re-defining items on every scroll event
-  //Source: https://discussions.udacity.com/t/cant-reach-the-60-fps-and-pageinsights-goal/183210/8?u=david_31931020565290
-  items = document.getElementsByClassName('mover');
   updatePositions();
 });
